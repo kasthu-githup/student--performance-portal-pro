@@ -169,10 +169,15 @@ class InstitutionalRepository {
     const diskState = loadDiskState();
     if (diskState) {
       if (Array.isArray(diskState.students) && diskState.students.length > 0) {
-        this.students = diskState.students;
+        // Merge disk students with INITIAL_STUDENTS so newly deployed students are always included
+        const diskRegNos = new Set(diskState.students.map((s: Student) => s.regNo.toUpperCase()));
+        const missingInitial = INITIAL_STUDENTS.filter((s) => !diskRegNos.has(s.regNo.toUpperCase()));
+        this.students = missingInitial.length > 0 ? [...diskState.students, ...missingInitial] : diskState.students;
       }
       if (Array.isArray(diskState.faculty) && diskState.faculty.length > 0) {
-        this.faculty = diskState.faculty;
+        const diskIds = new Set(diskState.faculty.map((f: Faculty) => f.id.toUpperCase()));
+        const missingInitial = INITIAL_FACULTY.filter((f) => !diskIds.has(f.id.toUpperCase()));
+        this.faculty = missingInitial.length > 0 ? [...diskState.faculty, ...missingInitial] : diskState.faculty;
       }
       if (diskState.hod) {
         this.hod = diskState.hod;
@@ -190,7 +195,9 @@ class InstitutionalRepository {
         this.fees = diskState.fees;
       }
       if (Array.isArray(diskState.users) && diskState.users.length > 0) {
-        this.users = diskState.users;
+        const diskUserIds = new Set(diskState.users.map((u: UserAccount) => u.id.toUpperCase()));
+        const missingUsers = this.users.filter((u) => !diskUserIds.has(u.id.toUpperCase()));
+        this.users = missingUsers.length > 0 ? [...diskState.users, ...missingUsers] : diskState.users;
       }
       if (Array.isArray(diskState.auditLogs) && diskState.auditLogs.length > 0) {
         this.auditLogs = diskState.auditLogs;

@@ -187,12 +187,18 @@ const STORAGE_KEYS = {
 const PortalContext = createContext<PortalContextType | undefined>(undefined);
 
 export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize state with localStorage or defaults
+  // Initialize state with localStorage or defaults (merging initial students to ensure updated institutional rosters are present)
   const [students, setStudents] = useState<Student[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.STUDENTS);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed: Student[] = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Merge with INITIAL_STUDENTS so newly hardcoded students/credentials are never lost
+          const existingRegNos = new Set(parsed.map((s) => s.regNo.toUpperCase()));
+          const missingInitial = INITIAL_STUDENTS.filter((s) => !existingRegNos.has(s.regNo.toUpperCase()));
+          return missingInitial.length > 0 ? [...parsed, ...missingInitial] : parsed;
+        }
       } catch (e) {
         console.error('Error parsing stored students', e);
       }
@@ -204,7 +210,12 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const saved = localStorage.getItem(STORAGE_KEYS.FACULTY);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed: Faculty[] = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const existingIds = new Set(parsed.map((f) => f.id.toUpperCase()));
+          const missingInitial = INITIAL_FACULTY.filter((f) => !existingIds.has(f.id.toUpperCase()));
+          return missingInitial.length > 0 ? [...parsed, ...missingInitial] : parsed;
+        }
       } catch (e) {
         console.error('Error parsing stored faculty', e);
       }
@@ -486,23 +497,31 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
 
         try {
-          // 1. Synchronize Students
+          // 1. Synchronize Students (merge API students with local state so locally created students are not erased)
           const stuRes = await fetch('/api/students');
           if (stuRes.ok) {
             const stuData = await stuRes.json();
-            const list = Array.isArray(stuData) ? stuData : stuData?.data;
+            const list: Student[] = Array.isArray(stuData) ? stuData : stuData?.data;
             if (Array.isArray(list) && list.length > 0) {
-              setStudents(list);
+              setStudents((prev) => {
+                const apiRegNos = new Set(list.map((s) => s.regNo.toUpperCase()));
+                const locallyAdded = prev.filter((s) => !apiRegNos.has(s.regNo.toUpperCase()));
+                return locallyAdded.length > 0 ? [...locallyAdded, ...list] : list;
+              });
             }
           }
 
-          // 2. Synchronize Faculty
+          // 2. Synchronize Faculty (merge API faculty with local state)
           const facRes = await fetch('/api/faculty');
           if (facRes.ok) {
             const facData = await facRes.json();
-            const list = Array.isArray(facData) ? facData : facData?.data;
+            const list: Faculty[] = Array.isArray(facData) ? facData : facData?.data;
             if (Array.isArray(list) && list.length > 0) {
-              setFacultyList(list);
+              setFacultyList((prev) => {
+                const apiIds = new Set(list.map((f) => f.id.toUpperCase()));
+                const locallyAdded = prev.filter((f) => !apiIds.has(f.id.toUpperCase()));
+                return locallyAdded.length > 0 ? [...locallyAdded, ...list] : list;
+              });
             }
           }
 
