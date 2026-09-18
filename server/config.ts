@@ -26,9 +26,9 @@ export const config = {
   tidb: {
     host: process.env.TIDB_HOST || 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com',
     port: Number(process.env.TIDB_PORT || 4000),
-    user: process.env.TIDB_USER || '3sofZfmeAkgsoaf.root',
+    user: process.env.TIDB_USER || '4DCBaqMJVo1Yjy9.root',
     password: process.env.TIDB_PASSWORD || '',
-    database: process.env.TIDB_DATABASE || 'test',
+    database: process.env.TIDB_DATABASE || 'college_nodue',
   },
 
   // Security & limits

@@ -156,8 +156,11 @@ export function getMySqlPool(): MySqlPool | null {
   return mysqlPool;
 }
 
+let isTiDbOnline = false;
+
 // Reset MySQL pool when credentials change
 export function resetMySqlPool(): void {
+  isTiDbOnline = false;
   if (mysqlPool) {
     mysqlPool.end().catch(() => {});
     mysqlPool = null;
@@ -327,6 +330,7 @@ export async function checkDbConnection(): Promise<DbStatus> {
         counts.audit_logs = Number(auditRes[0]?.count || 0);
       } catch {}
 
+      isTiDbOnline = true;
       return {
         connected: true,
         type: 'TiDB Cloud (Serverless MySQL 8.0)',
@@ -345,6 +349,7 @@ export async function checkDbConnection(): Promise<DbStatus> {
       conn.release();
     }
   } catch (err: any) {
+    isTiDbOnline = false;
     return {
       connected: false,
       type: 'TiDB Cloud (Serverless MySQL 8.0)',
@@ -912,6 +917,7 @@ export async function initDbSchema(): Promise<boolean> {
 // -------------------------------------------------------------
 
 export async function saveStudentToTiDb(student: any): Promise<boolean> {
+  if (!isTiDbOnline) return false;
   const pool = getMySqlPool();
   if (!pool) return false;
 
@@ -992,12 +998,14 @@ export async function saveStudentToTiDb(student: any): Promise<boolean> {
       conn.release();
     }
   } catch (err: any) {
-    console.error('[TiDB] Error saving student:', err.message);
+    isTiDbOnline = false;
+    console.warn('[TiDB] Sync pending (database offline):', err.message);
     return false;
   }
 }
 
 export async function deleteStudentFromTiDb(regNo: string): Promise<boolean> {
+  if (!isTiDbOnline) return false;
   const pool = getMySqlPool();
   if (!pool) return false;
 
@@ -1011,12 +1019,14 @@ export async function deleteStudentFromTiDb(regNo: string): Promise<boolean> {
       conn.release();
     }
   } catch (err: any) {
-    console.error('[TiDB] Error deleting student:', err.message);
+    isTiDbOnline = false;
+    console.warn('[TiDB] Sync pending (database offline):', err.message);
     return false;
   }
 }
 
 export async function saveAttendanceRecordToTiDb(record: any): Promise<boolean> {
+  if (!isTiDbOnline) return false;
   const pool = getMySqlPool();
   if (!pool) return false;
 
@@ -1051,12 +1061,14 @@ export async function saveAttendanceRecordToTiDb(record: any): Promise<boolean> 
       conn.release();
     }
   } catch (err: any) {
-    console.error('[TiDB] Error saving attendance record:', err.message);
+    isTiDbOnline = false;
+    console.warn('[TiDB] Sync pending (database offline):', err.message);
     return false;
   }
 }
 
 export async function saveLeaveRequestToTiDb(leave: any): Promise<boolean> {
+  if (!isTiDbOnline) return false;
   const pool = getMySqlPool();
   if (!pool) return false;
 
@@ -1098,12 +1110,14 @@ export async function saveLeaveRequestToTiDb(leave: any): Promise<boolean> {
       conn.release();
     }
   } catch (err: any) {
-    console.error('[TiDB] Error saving leave request:', err.message);
+    isTiDbOnline = false;
+    console.warn('[TiDB] Sync pending (database offline):', err.message);
     return false;
   }
 }
 
 export async function saveFacultyToTiDb(faculty: any): Promise<boolean> {
+  if (!isTiDbOnline) return false;
   const pool = getMySqlPool();
   if (!pool) return false;
 
@@ -1156,12 +1170,14 @@ export async function saveFacultyToTiDb(faculty: any): Promise<boolean> {
       conn.release();
     }
   } catch (err: any) {
-    console.error('[TiDB] Error saving faculty:', err.message);
+    isTiDbOnline = false;
+    console.warn('[TiDB] Sync pending (database offline):', err.message);
     return false;
   }
 }
 
 export async function saveAnnouncementToTiDb(ann: any): Promise<boolean> {
+  if (!isTiDbOnline) return false;
   const pool = getMySqlPool();
   if (!pool) return false;
 
@@ -1194,12 +1210,14 @@ export async function saveAnnouncementToTiDb(ann: any): Promise<boolean> {
       conn.release();
     }
   } catch (err: any) {
-    console.error('[TiDB] Error saving announcement:', err.message);
+    isTiDbOnline = false;
+    console.warn('[TiDB] Sync pending (database offline):', err.message);
     return false;
   }
 }
 
 export async function saveFeeToTiDb(fee: any): Promise<boolean> {
+  if (!isTiDbOnline) return false;
   const pool = getMySqlPool();
   if (!pool) return false;
 
@@ -1243,12 +1261,14 @@ export async function saveFeeToTiDb(fee: any): Promise<boolean> {
       conn.release();
     }
   } catch (err: any) {
-    console.error('[TiDB] Error saving fee:', err.message);
+    isTiDbOnline = false;
+    console.warn('[TiDB] Sync pending (database offline):', err.message);
     return false;
   }
 }
 
 export async function saveUserToTiDb(user: any): Promise<boolean> {
+  if (!isTiDbOnline) return false;
   const pool = getMySqlPool();
   if (!pool) return false;
 
@@ -1278,12 +1298,14 @@ export async function saveUserToTiDb(user: any): Promise<boolean> {
       conn.release();
     }
   } catch (err: any) {
-    console.error('[TiDB] Error saving user:', err.message);
+    isTiDbOnline = false;
+    console.warn('[TiDB] Sync pending (database offline):', err.message);
     return false;
   }
 }
 
 export async function saveAuditLogToTiDb(log: any): Promise<boolean> {
+  if (!isTiDbOnline) return false;
   const pool = getMySqlPool();
   if (!pool) return false;
 
@@ -1299,7 +1321,8 @@ export async function saveAuditLogToTiDb(log: any): Promise<boolean> {
       conn.release();
     }
   } catch (err: any) {
-    console.error('[TiDB] Error saving audit log:', err.message);
+    isTiDbOnline = false;
+    console.warn('[TiDB] Sync pending (database offline):', err.message);
     return false;
   }
 }

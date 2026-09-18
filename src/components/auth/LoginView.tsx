@@ -23,6 +23,7 @@ import {
   Check,
   RotateCcw,
 } from 'lucide-react';
+import { DatabaseStatusModal } from '../common/DatabaseStatusModal';
 
 export const LoginView: React.FC = () => {
   const {
@@ -44,6 +45,7 @@ export const LoginView: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [isDbModalOpen, setIsDbModalOpen] = useState(false);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -221,10 +223,15 @@ export const LoginView: React.FC = () => {
 
       {/* Top Controls: Fullscreen & Status */}
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 flex items-center gap-2">
-        <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/80 border border-slate-800 text-[11px] font-medium text-slate-300">
-          <span className={`w-2 h-2 rounded-full ${dbStatus?.connected ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-          <span>{dbStatus?.connected ? 'DB Connected' : 'Relational DB'}</span>
-        </div>
+        <button
+          type="button"
+          onClick={() => setIsDbModalOpen(true)}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-[11px] font-medium text-slate-300 transition-colors cursor-pointer group"
+          title="Click to inspect TiDB database connection or update credentials"
+        >
+          <span className={`w-2 h-2 rounded-full ${dbStatus?.connected ? 'bg-emerald-400 shadow-xs shadow-emerald-400/50' : 'bg-amber-400'}`} />
+          <span className="group-hover:text-white">{dbStatus?.connected ? 'DB Connected' : 'Relational DB'}</span>
+        </button>
         <button
           type="button"
           onClick={toggleFullscreen}
@@ -814,6 +821,12 @@ export const LoginView: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+      {isDbModalOpen && (
+        <DatabaseStatusModal
+          isOpen={isDbModalOpen}
+          onClose={() => setIsDbModalOpen(false)}
+        />
       )}
     </div>
   );

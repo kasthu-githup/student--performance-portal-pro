@@ -42,6 +42,7 @@ import { FacultyDetailModal } from '../common/FacultyDetailModal';
 import { EditStudentModal } from '../faculty/EditStudentModal';
 import { EditFacultyModal } from '../hod/EditFacultyModal';
 import { EditHODModal } from './EditHODModal';
+import { DatabaseStatusModal } from '../common/DatabaseStatusModal';
 
 interface AdminDashboardProps {
   activeTab?: string;
@@ -115,6 +116,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isNewStudentModalOpen, setIsNewStudentModalOpen] = useState(false);
   const [editingFaculty, setEditingFaculty] = useState<any | null>(null);
   const [editingHOD, setEditingHOD] = useState<any | null>(null);
+  const [isDbModalOpen, setIsDbModalOpen] = useState(false);
 
   // Allocate HOD modal
   const [isAllocateHODModalOpen, setIsAllocateHODModalOpen] = useState(false);
@@ -1390,26 +1392,87 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
-              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Database Synchronization</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                The college management portal communicates with PostgreSQL/TiDB backends to synchronize attendance, student portfolios, and audit trails.
-              </p>
-              <div className="text-xs text-slate-700 space-y-1">
-                <div>Engine: <span className="font-semibold">{dbStatus?.type || 'PostgreSQL'}</span></div>
-                <div>Status: <span className="font-semibold text-emerald-600">Connected & Verified</span></div>
-                <div>Students Record Count: <span className="font-semibold">{students.length}</span></div>
-                <div>Attendance Log Count: <span className="font-semibold">{attendanceRecords.length}</span></div>
+            <div className={`p-4 rounded-xl border space-y-3 ${
+              dbStatus?.connected
+                ? 'border-emerald-200 bg-emerald-50/20'
+                : 'border-amber-300 bg-amber-50/40'
+            }`}>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <Database className="w-4 h-4 text-indigo-600" />
+                  <span>TiDB Cloud Database Engine</span>
+                </h3>
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                  dbStatus?.connected
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                    : 'bg-amber-100 text-amber-800 border border-amber-300'
+                }`}>
+                  {dbStatus?.connected ? (
+                    <>
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      <span>Connected & Active</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle className="w-3 h-3 text-amber-600" />
+                      <span>Disconnected / Offline</span>
+                    </>
+                  )}
+                </span>
               </div>
-              <button
-                type="button"
-                onClick={() => syncDataToDb()}
-                disabled={isDbSyncing}
-                className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 cursor-pointer"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isDbSyncing ? 'animate-spin' : ''}`} />
-                <span>{isDbSyncing ? 'Synchronizing...' : 'Force Sync All Master Records'}</span>
-              </button>
+
+              <div className="text-xs text-slate-700 space-y-1 bg-white/70 p-3 rounded-lg border border-slate-200/80">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Host / Engine:</span>
+                  <span className="font-semibold font-mono text-[11px]">{dbStatus?.host || 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Database Name:</span>
+                  <span className="font-semibold font-mono">{dbStatus?.database || 'college_nodue'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Cluster User:</span>
+                  <span className="font-semibold font-mono text-[11px]">{dbStatus?.user || '4DCBaqMJVo1Yjy9.root'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Students in Portal:</span>
+                  <span className="font-bold text-slate-900">{students.length} students</span>
+                </div>
+              </div>
+
+              {!dbStatus?.connected && (
+                <div className="p-2.5 rounded-lg bg-amber-100/70 border border-amber-300/80 text-[11px] text-amber-900 space-y-1">
+                  <div className="font-bold flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                    <span>Database Not Connected</span>
+                  </div>
+                  <p className="text-[10.5px] leading-relaxed">
+                    {dbStatus?.message || 'Access denied or server IP not allowed. In TiDB Cloud Console, ensure 0.0.0.0/0 is added under Security / IP Access List, and re-verify cluster password.'}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsDbModalOpen(true)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-xs cursor-pointer"
+                >
+                  <Key className="w-3.5 h-3.5" />
+                  <span>Configure / Reconnect TiDB</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => syncDataToDb()}
+                  disabled={isDbSyncing}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 transition-colors cursor-pointer disabled:opacity-50"
+                  title="Push all current student and academic records into TiDB Cloud"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isDbSyncing ? 'animate-spin' : ''}`} />
+                  <span>{isDbSyncing ? 'Syncing...' : 'Sync Data to TiDB'}</span>
+                </button>
+              </div>
             </div>
 
             <div className="p-4 rounded-xl border border-indigo-200 bg-indigo-50/30 space-y-3">
@@ -2288,6 +2351,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           onSave={() => {
             setEditingHOD(null);
           }}
+        />
+      )}
+
+      {isDbModalOpen && (
+        <DatabaseStatusModal
+          isOpen={isDbModalOpen}
+          onClose={() => setIsDbModalOpen(false)}
         />
       )}
 

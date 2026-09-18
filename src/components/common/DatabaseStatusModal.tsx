@@ -31,9 +31,9 @@ export const DatabaseStatusModal: React.FC<DatabaseStatusModalProps> = ({ isOpen
   // Form states for custom TiDB connection
   const [host, setHost] = useState(dbStatus?.host || 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com');
   const [port, setPort] = useState(String(dbStatus?.port || 4000));
-  const [user, setUser] = useState(dbStatus?.user || '3sofZfmeAkgsoaf.root');
+  const [user, setUser] = useState(dbStatus?.user || '4DCBaqMJVo1Yjy9.root');
   const [password, setPassword] = useState('');
-  const [database, setDatabase] = useState(dbStatus?.database || 'test');
+  const [database, setDatabase] = useState(dbStatus?.database || 'college_nodue');
   const [isConnecting, setIsConnecting] = useState(false);
 
   if (!isOpen) return null;
@@ -200,9 +200,9 @@ export const DatabaseStatusModal: React.FC<DatabaseStatusModalProps> = ({ isOpen
 
             {showConfigForm && (
               <form onSubmit={handleConnect} className="p-4 bg-white border-t border-slate-200 space-y-3">
-                <p className="text-[11px] text-slate-500">
-                  Enter your TiDB Serverless/Dedicated connection details below to connect and sync data.
-                </p>
+                <div className="p-2.5 rounded-lg bg-indigo-50 border border-indigo-100 text-[11px] text-indigo-900 leading-relaxed">
+                  <strong>💡 TiDB Cloud Tip:</strong> In your <em>TiDB Cloud Console &rarr; Security / Networking &rarr; IP Access List</em>, ensure <code>0.0.0.0/0</code> (Allow all) is added so cloud servers can connect without IP rejection.
+                </div>
 
                 <div>
                   <label className="block text-[11px] font-bold text-slate-700 mb-1">TiDB Host</label>

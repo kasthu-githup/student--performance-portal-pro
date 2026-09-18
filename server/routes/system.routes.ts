@@ -60,7 +60,7 @@ router.post('/db/connect', async (req: Request, res: Response) => {
       host: host || config.tidb.host,
       port: port ? Number(port) : config.tidb.port,
       user: user || config.tidb.user,
-      password: password !== undefined ? password : config.tidb.password,
+      password: (password && String(password).trim() !== '') ? String(password).trim() : config.tidb.password,
       database: database || config.tidb.database,
     });
 
